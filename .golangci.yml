@@ -183,7 +183,6 @@ linters-settings:
       - ifElseChain
       - importShadow
       - hugeParam
-      - rangeValCopy
       - commentedOutCode
       - commentedOutImport
       - unnamedResult
@@ -456,3 +455,23 @@ issues:
         - revive
       path: "cmd/crowdsec/win_service.go"
       text: "deep-exit: .*"
+
+    - linters:
+        - gocritic
+      path: "cmd/crowdsec-cli"
+      text: "rangeValCopy: .*"
+
+    - linters:
+        - gocritic
+      path: "pkg/(cticlient|hubtest)"
+      text: "rangeValCopy: .*"
+
+    - linters:
+        - gocritic
+      path: "(.+)_test.go"
+      text: "rangeValCopy: .*"
+
+#    - linters:
+#        - gocritic
+#      path: "pkg/(appsec|acquisition|dumps|alertcontext|leakybucket|exprhelpers)"
+#      text: "rangeValCopy: .*"
