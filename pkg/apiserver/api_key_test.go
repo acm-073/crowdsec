@@ -23,7 +23,7 @@ func TestAPIKey(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 403, w.Code)
-	assert.Equal(t, `{"message":"access forbidden"}`, w.Body.String())
+	assert.JSONEq(t, `{"message":"access forbidden"}`, w.Body.String())
 
 	// Login with invalid token
 	w = httptest.NewRecorder()
@@ -33,7 +33,7 @@ func TestAPIKey(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 403, w.Code)
-	assert.Equal(t, `{"message":"access forbidden"}`, w.Body.String())
+	assert.JSONEq(t, `{"message":"access forbidden"}`, w.Body.String())
 
 	// Login with valid token
 	w = httptest.NewRecorder()
