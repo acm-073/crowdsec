@@ -13,6 +13,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl"
+	"github.com/segmentio/kafka-go/sasl/plain"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/tomb.v2"
 	"gopkg.in/yaml.v2"
@@ -33,12 +35,13 @@ var linesRead = prometheus.NewCounterVec(
 	[]string{"topic"})
 
 type KafkaConfiguration struct {
-	Brokers                           []string   `yaml:"brokers"`
-	Topic                             string     `yaml:"topic"`
-	GroupID                           string     `yaml:"group_id"`
-	Partition                         int        `yaml:"partition"`
-	Timeout                           string     `yaml:"timeout"`
-	TLS                               *TLSConfig `yaml:"tls"`
+	Brokers                           []string    `yaml:"brokers"`
+	Topic                             string      `yaml:"topic"`
+	GroupID                           string      `yaml:"group_id"`
+	Partition                         int         `yaml:"partition"`
+	Timeout                           string      `yaml:"timeout"`
+	TLS                               *TLSConfig  `yaml:"tls"`
+	SASL                              *SASLConfig `yaml:"sasl"`
 	configuration.DataSourceCommonCfg `yaml:",inline"`
 }
 
@@ -47,6 +50,13 @@ type TLSConfig struct {
 	ClientCert         string `yaml:"client_cert"`
 	ClientKey          string `yaml:"client_key"`
 	CaCert             string `yaml:"ca_cert"`
+}
+
+type SASLConfig struct {
+	Mechanism string `yaml:"mechanism"`
+	Username  string `yaml:"username"`
+	Password  string `yaml:"password"`
+	UseSSL    bool   `yaml:"use_ssl"`
 }
 
 type KafkaSource struct {
@@ -236,6 +246,17 @@ func (kc *KafkaConfiguration) NewTLSConfig() (*tls.Config, error) {
 	return &tlsConfig, err
 }
 
+func (kc *KafkaConfiguration) NewSASLConfig() (sasl.Mechanism, error) {
+	if kc.SASL.Mechanism == "PLAIN" {
+		mechanism := plain.Mechanism{
+			Username: kc.SASL.Username,
+			Password: kc.SASL.Password,
+		}
+		return mechanism, nil
+	}
+	return nil, fmt.Errorf("unsupported sasl mechanism: %s", kc.SASL.Mechanism)
+}
+
 func (kc *KafkaConfiguration) NewDialer() (*kafka.Dialer, error) {
 	dialer := &kafka.Dialer{}
 	var timeoutDuration time.Duration
@@ -258,6 +279,17 @@ func (kc *KafkaConfiguration) NewDialer() (*kafka.Dialer, error) {
 			return dialer, err
 		}
 		dialer.TLS = tlsConfig
+	} else if kc.SASL != nil && kc.SASL.UseSSL {
+		tlsConfig := tls.Config{}
+		dialer.TLS = &tlsConfig
+	}
+
+	if kc.SASL != nil {
+		saslMechanism, err := kc.NewSASLConfig()
+		if err != nil {
+			return dialer, err
+		}
+		dialer.SASLMechanism = saslMechanism
 	}
 	return dialer, nil
 }
