@@ -303,8 +303,8 @@ func (kc *KafkaConfiguration) NewReader(dialer *kafka.Dialer, logger *log.Entry)
 		Dialer:      dialer,
 		Logger:      kafka.LoggerFunc(logger.Debugf),
 		ErrorLogger: kafka.LoggerFunc(logger.Errorf),
-		MinBytes:    10e3, // 10KB
-		MaxBytes:    10e6, // 10MB
+		MinBytes:    500e3, // 500KB
+		MaxBytes:    10e6,  // 10MB
 		MaxWait:     time.Second,
 	}
 	if kc.GroupID != "" && kc.Partition != 0 {
