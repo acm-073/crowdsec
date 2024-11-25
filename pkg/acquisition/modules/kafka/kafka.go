@@ -298,14 +298,15 @@ func (kc *KafkaConfiguration) NewDialer() (*kafka.Dialer, error) {
 
 func (kc *KafkaConfiguration) NewReader(dialer *kafka.Dialer, logger *log.Entry) (*kafka.Reader, error) {
 	rConf := kafka.ReaderConfig{
-		Brokers:     kc.Brokers,
-		Topic:       kc.Topic,
-		Dialer:      dialer,
-		Logger:      kafka.LoggerFunc(logger.Debugf),
-		ErrorLogger: kafka.LoggerFunc(logger.Errorf),
-		MinBytes:    2 * 10e5, // 2MB
-		MaxBytes:    10e6,     // 10MB
-		MaxWait:     2 * time.Second,
+		Brokers:        kc.Brokers,
+		Topic:          kc.Topic,
+		Dialer:         dialer,
+		Logger:         kafka.LoggerFunc(logger.Debugf),
+		ErrorLogger:    kafka.LoggerFunc(logger.Errorf),
+		MinBytes:       2 * 10e5, // 2MB
+		MaxBytes:       10e6,     // 10MB
+		MaxWait:        10 * time.Second,
+		CommitInterval: 3 * time.Second,
 	}
 	if kc.GroupID != "" && kc.Partition != 0 {
 		return &kafka.Reader{}, errors.New("cannot specify both group_id and partition")
