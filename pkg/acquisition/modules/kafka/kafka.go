@@ -305,7 +305,7 @@ func (kc *KafkaConfiguration) NewReader(dialer *kafka.Dialer, logger *log.Entry)
 		ErrorLogger: kafka.LoggerFunc(logger.Errorf),
 		MinBytes:    500e3, // 500KB
 		MaxBytes:    10e6,  // 10MB
-		MaxWait:     time.Second,
+		MaxWait:     2 * time.Second,
 	}
 	if kc.GroupID != "" && kc.Partition != 0 {
 		return &kafka.Reader{}, errors.New("cannot specify both group_id and partition")
