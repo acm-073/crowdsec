@@ -25,7 +25,7 @@ import (
 	"github.com/crowdsecurity/crowdsec/pkg/types"
 )
 
-var dataSourceName = "kafka"
+const dataSourceName = "kafka"
 
 var linesRead = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
@@ -160,14 +160,18 @@ func (k *KafkaSource) Dump() interface{} {
 func (k *KafkaSource) ReadMessage(ctx context.Context, out chan types.Event) error {
 	// Start processing from latest Offset
 	k.Reader.SetOffsetAt(ctx, time.Now())
+
 	for {
 		k.logger.Tracef("reading message from topic '%s'", k.Config.Topic)
+
 		m, err := k.Reader.ReadMessage(ctx)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
 			}
+
 			k.logger.Errorln(fmt.Errorf("while reading %s message: %w", dataSourceName, err))
+
 			continue
 		}
 
@@ -230,19 +234,23 @@ func (kc *KafkaConfiguration) NewTLSConfig() (*tls.Config, error) {
 	if err != nil {
 		return &tlsConfig, err
 	}
+
 	tlsConfig.Certificates = []tls.Certificate{cert}
 
 	caCert, err := os.ReadFile(kc.TLS.CaCert)
 	if err != nil {
 		return &tlsConfig, err
 	}
+
 	caCertPool, err := x509.SystemCertPool()
 	if err != nil {
 		return &tlsConfig, fmt.Errorf("unable to load system CA certificates: %w", err)
 	}
+
 	if caCertPool == nil {
 		caCertPool = x509.NewCertPool()
 	}
+
 	caCertPool.AppendCertsFromPEM(caCert)
 	tlsConfig.RootCAs = caCertPool
 
@@ -311,9 +319,11 @@ func (kc *KafkaConfiguration) NewReader(dialer *kafka.Dialer, logger *log.Entry)
 		MaxWait:        10 * time.Second,
 		CommitInterval: 3 * time.Second,
 	}
+
 	if kc.GroupID != "" && kc.Partition != 0 {
 		return &kafka.Reader{}, errors.New("cannot specify both group_id and partition")
 	}
+
 	if kc.GroupID != "" {
 		rConf.GroupID = kc.GroupID
 	} else if kc.Partition != 0 {
@@ -321,8 +331,10 @@ func (kc *KafkaConfiguration) NewReader(dialer *kafka.Dialer, logger *log.Entry)
 	} else {
 		logger.Warnf("no group_id specified, crowdsec will only read from the 1st partition of the topic")
 	}
+
 	if err := rConf.Validate(); err != nil {
 		return &kafka.Reader{}, fmt.Errorf("while validating reader configuration: %w", err)
 	}
+
 	return kafka.NewReader(rConf), nil
 }
